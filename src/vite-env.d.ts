@@ -1,12 +1,13 @@
 
-/// <reference types="vite/client" />
+/// <reference types="node" />
 
-interface ImportMetaEnv {
-  readonly VITE_API_KEY: string;
+declare namespace NodeJS {
+  interface ProcessEnv {
+    readonly API_KEY: string;
+  }
 }
 
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
-}
+// Removed missing vite/client reference to resolve compilation error.
+// The application relies on process.env.API_KEY as the exclusive source for API keys.
 
 export {};

@@ -1,13 +1,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Thermometer, Zap, ShieldCheck, Loader2, AlertTriangle, RefreshCw, PlusCircle } from 'lucide-react';
+import { Thermometer, Zap, ShieldCheck, Loader2, AlertTriangle, RefreshCw, PlusCircle, BookOpen, Search } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import QuestionResults from './components/QuestionResults';
 import AnalysisSummary from './components/AnalysisSummary';
+import TopicSummary from './components/TopicSummary';
 import { analyzeTestImages } from './services/geminiService';
 import { AppState } from './types';
 
 const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'analysis' | 'summaries'>('analysis');
   const [state, setState] = useState<AppState>({
     isAnalyzing: false,
     images: [],
@@ -37,7 +39,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
-      if (state.isAnalyzing) return;
+      if (state.isAnalyzing || activeTab !== 'analysis') return;
       const items = e.clipboardData?.items;
       if (!items) return;
       for (const item of Array.from(items)) {
@@ -55,7 +57,7 @@ const App: React.FC = () => {
     };
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [state.isAnalyzing, handleImageAdded]);
+  }, [state.isAnalyzing, handleImageAdded, activeTab]);
 
   const handleAnalyze = async () => {
     if (state.images.length === 0) return;
@@ -65,7 +67,6 @@ const App: React.FC = () => {
       const results = await analyzeTestImages(state.images);
       setState(prev => ({ ...prev, isAnalyzing: false, result: results }));
     } catch (err: any) {
-      // If the request fails with 'Requested entity was not found.', trigger key selection
       if (err?.message?.includes("Requested entity was not found")) {
         // @ts-ignore
         if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
@@ -100,100 +101,142 @@ const App: React.FC = () => {
             </div>
           </div>
           
-          <div className="hidden sm:flex items-center gap-6">
-            <div className="flex items-center gap-1.5 text-sm font-medium text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
-              <ShieldCheck size={16} />
-              <span>Normativa F-Gas 2024</span>
-            </div>
-            {state.images.length > 0 && (
-              <button 
-                onClick={handleReset}
-                className="flex items-center gap-2 text-gray-400 hover:text-red-500 font-bold transition-colors text-xs uppercase"
+          <div className="hidden sm:flex items-center gap-4">
+            <div className="flex p-1 bg-gray-100 rounded-xl border border-gray-200">
+              <button
+                onClick={() => setActiveTab('analysis')}
+                className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'analysis' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
               >
-                <RefreshCw size={14} />
-                Limpiar
+                <Search size={16} />
+                Analizador
               </button>
-            )}
+              <button
+                onClick={() => setActiveTab('summaries')}
+                className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'summaries' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <BookOpen size={16} />
+                Resúmenes
+              </button>
+            </div>
+            <div className="w-px h-6 bg-gray-200"></div>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-100 uppercase tracking-tighter">
+              <ShieldCheck size={14} />
+              <span>F-Gas 2024</span>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-12">
-        {!state.result && (
-          <div className="text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
-            <h2 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
-              Análisis Inteligente de Exámenes
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Pega tus capturas (<kbd className="bg-gray-200 px-1.5 py-0.5 rounded text-sm font-mono">Ctrl+V</kbd>) para resolver las preguntas de refrigeración al instante.
-            </p>
-          </div>
-        )}
+      <main className="max-w-5xl mx-auto px-4 py-8">
+        {/* Mobile Tab Switcher */}
+        <div className="sm:hidden flex p-1 bg-gray-200 rounded-2xl mb-8 border border-gray-300">
+          <button
+            onClick={() => setActiveTab('analysis')}
+            className={`flex-1 py-3 rounded-xl text-sm font-black uppercase tracking-tighter flex items-center justify-center gap-2 ${activeTab === 'analysis' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500'}`}
+          >
+            <Search size={18} />
+            Test
+          </button>
+          <button
+            onClick={() => setActiveTab('summaries')}
+            className={`flex-1 py-3 rounded-xl text-sm font-black uppercase tracking-tighter flex items-center justify-center gap-2 ${activeTab === 'summaries' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500'}`}
+          >
+            <BookOpen size={18} />
+            Temas
+          </button>
+        </div>
 
-        <div className="space-y-8">
-          {state.result && <AnalysisSummary results={state.result} />}
-
-          <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-gray-100">
-            {!state.result ? (
-              <div className="space-y-8">
-                <FileUpload 
-                  onImageAdded={handleImageAdded} 
-                  images={state.images}
-                  onRemoveImage={removeImage}
-                  disabled={state.isAnalyzing}
-                />
-                
-                {state.error && (
-                  <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-700">
-                    <AlertTriangle size={20} className="flex-shrink-0" />
-                    <p className="font-medium text-sm">{state.error}</p>
-                  </div>
-                )}
-
-                <button
-                  onClick={handleAnalyze}
-                  disabled={state.images.length === 0 || state.isAnalyzing}
-                  className={`
-                    w-full py-6 rounded-2xl text-2xl font-black flex items-center justify-center gap-4 transition-all uppercase tracking-tight
-                    ${state.images.length > 0 && !state.isAnalyzing 
-                      ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-100 hover:scale-[1.01]' 
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'}
-                  `}
-                >
-                  {state.isAnalyzing ? (
-                    <>
-                      <Loader2 className="animate-spin" />
-                      Analizando...
-                    </>
-                  ) : (
-                    <>
-                      <Zap className={state.images.length > 0 ? 'animate-pulse' : ''} />
-                      Resolver Preguntas
-                    </>
-                  )}
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-12">
-                <div className="flex justify-start px-2">
-                   <button 
-                    onClick={handleReset}
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-bold bg-blue-50 px-6 py-3 rounded-full transition-colors border border-blue-100"
-                  >
-                    <PlusCircle size={20} />
-                    Nuevo Análisis
-                  </button>
-                </div>
-                <QuestionResults results={state.result} />
+        {activeTab === 'analysis' ? (
+          <>
+            {!state.result && (
+              <div className="text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
+                <h2 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
+                  Análisis Inteligente de Exámenes
+                </h2>
+                <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                  Resuelve tus test de refrigeración con IA experta en normativa actual.
+                </p>
               </div>
             )}
+
+            <div className="space-y-8">
+              {state.result && <AnalysisSummary results={state.result} />}
+
+              <div className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-gray-100">
+                {!state.result ? (
+                  <div className="space-y-8">
+                    <FileUpload 
+                      onImageAdded={handleImageAdded} 
+                      images={state.images}
+                      onRemoveImage={removeImage}
+                      disabled={state.isAnalyzing}
+                    />
+                    
+                    {state.error && (
+                      <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-700">
+                        <AlertTriangle size={20} className="flex-shrink-0" />
+                        <p className="font-medium text-sm">{state.error}</p>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={handleAnalyze}
+                      disabled={state.images.length === 0 || state.isAnalyzing}
+                      className={`
+                        w-full py-6 rounded-2xl text-2xl font-black flex items-center justify-center gap-4 transition-all uppercase tracking-tight
+                        ${state.images.length > 0 && !state.isAnalyzing 
+                          ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-100 hover:scale-[1.01]' 
+                          : 'bg-gray-100 text-gray-400 cursor-not-allowed'}
+                      `}
+                    >
+                      {state.isAnalyzing ? (
+                        <>
+                          <Loader2 className="animate-spin" />
+                          Analizando...
+                        </>
+                      ) : (
+                        <>
+                          <Zap className={state.images.length > 0 ? 'animate-pulse' : ''} />
+                          Resolver Preguntas
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-12">
+                    <div className="flex justify-start px-2">
+                       <button 
+                        onClick={handleReset}
+                        className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-bold bg-blue-50 px-6 py-3 rounded-full transition-colors border border-blue-100"
+                      >
+                        <PlusCircle size={20} />
+                        Nuevo Análisis
+                      </button>
+                    </div>
+                    <QuestionResults results={state.result} />
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
+                Biblioteca de Resúmenes Técnicos
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                Selecciona un bloque temático para obtener un resumen ejecutivo actualizado.
+              </p>
+            </div>
+            <TopicSummary />
           </div>
-        </div>
+        )}
       </main>
       
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900/90 backdrop-blur text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-50 border border-white/10">
         <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-        <span className="text-sm font-bold tracking-tight">AI Engine Ready</span>
+        <span className="text-sm font-bold tracking-tight">AI Expert Active</span>
       </div>
     </div>
   );
