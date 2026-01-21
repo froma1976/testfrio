@@ -3,7 +3,6 @@ import { SYSTEM_PROMPT, MODEL_NAME } from "../constants";
 import { AnalysisResult } from "../types";
 
 export const analyzeTestImages = async (base64Images: string[]): Promise<AnalysisResult[]> => {
-  // Siempre crear una instancia nueva para capturar la clave actualizada del proceso
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const imageParts = base64Images.map(img => ({
@@ -29,19 +28,13 @@ export const analyzeTestImages = async (base64Images: string[]): Promise<Analysi
 
     const resultText = response.text;
     if (!resultText) {
-      throw new Error("El modelo no devolvió ninguna respuesta válida.");
+      throw new Error("No se recibió respuesta del servidor.");
     }
 
     const cleanJson = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
     return JSON.parse(cleanJson) as AnalysisResult[];
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-    
-    // Si la clave falla o el proyecto no tiene facturación, lanzamos un error específico
-    if (error.message?.includes("Requested entity was not found") || error.message?.includes("API key")) {
-      throw new Error("AUTH_ERROR");
-    }
-    
     throw new Error(error.message || "Error al analizar las imágenes.");
   }
 };
