@@ -1,18 +1,37 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Thermometer, Zap, ShieldCheck, Loader2, AlertTriangle, RefreshCw, PlusCircle } from 'lucide-react';
+import { Thermometer, Zap, ShieldCheck, Loader2, AlertTriangle, RefreshCw, PlusCircle, Key } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import QuestionResults from './components/QuestionResults';
 import AnalysisSummary from './components/AnalysisSummary';
+import ApiKeySelector from './components/ApiKeySelector';
 import { analyzeTestImages } from './services/geminiService';
 import { AppState } from './types';
 
 const App: React.FC = () => {
+  const [showKeySelector, setShowKeySelector] = useState<boolean>(false);
   const [state, setState] = useState<AppState>({
     isAnalyzing: false,
     images: [],
     result: null,
     error: null
   });
+
+  // Verificar si hay clave al iniciar
+  useEffect(() => {
+    const checkKey = async () => {
+      // @ts-ignore
+      const hasKey = await window.aistudio?.hasSelectedApiKey();
+      if (!hasKey) {
+        setShowKeySelector(true);
+      }
+    };
+    checkKey();
+  }, []);
+
+  const handleKeySelected = () => {
+    setShowKeySelector(false);
+    setState(prev => ({ ...prev, error: null }));
+  };
 
   const handleImageAdded = useCallback((base64: string) => {
     setState(prev => {
@@ -36,7 +55,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
-      if (state.isAnalyzing) return;
+      if (state.isAnalyzing || showKeySelector) return;
       const items = e.clipboardData?.items;
       if (!items) return;
       for (const item of Array.from(items)) {
@@ -54,7 +73,7 @@ const App: React.FC = () => {
     };
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, [state.isAnalyzing, handleImageAdded]);
+  }, [state.isAnalyzing, handleImageAdded, showKeySelector]);
 
   const handleAnalyze = async () => {
     if (state.images.length === 0) return;
@@ -64,7 +83,12 @@ const App: React.FC = () => {
       const results = await analyzeTestImages(state.images);
       setState(prev => ({ ...prev, isAnalyzing: false, result: results }));
     } catch (err: any) {
-      setState(prev => ({ ...prev, isAnalyzing: false, error: err.message }));
+      if (err.message === "AUTH_ERROR") {
+        setShowKeySelector(true);
+        setState(prev => ({ ...prev, isAnalyzing: false, error: "La clave de API actual no es válida o requiere facturación habilitada." }));
+      } else {
+        setState(prev => ({ ...prev, isAnalyzing: false, error: err.message }));
+      }
     }
   };
 
@@ -72,6 +96,14 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, images: [], result: null, error: null }));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  if (showKeySelector) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-6 flex items-center justify-center">
+        <ApiKeySelector onKeySelected={handleKeySelected} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-gray-900 font-sans pb-20">
@@ -85,7 +117,7 @@ const App: React.FC = () => {
               <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
                 RefriTest AI
               </h1>
-              <p className="text-[10px] text-gray-500 font-medium tracking-widest uppercase text-left">Expert Assistant</p>
+              <p className="text-[10px] text-gray-500 font-medium tracking-widest uppercase text-left">Pro Expert Assistant</p>
             </div>
           </div>
           
@@ -94,15 +126,13 @@ const App: React.FC = () => {
               <ShieldCheck size={16} />
               <span>Regulaciones 2024 Actualizadas</span>
             </div>
-            {state.images.length > 0 && (
-              <button 
-                onClick={handleReset}
-                className="flex items-center gap-2 text-gray-500 hover:text-red-500 font-bold transition-colors text-sm"
-              >
-                <RefreshCw size={16} />
-                Limpiar todo
-              </button>
-            )}
+            <button 
+              onClick={() => setShowKeySelector(true)}
+              className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+              title="Cambiar API Key"
+            >
+              <Key size={20} />
+            </button>
           </div>
         </div>
       </header>
@@ -152,7 +182,7 @@ const App: React.FC = () => {
                   {state.isAnalyzing ? (
                     <>
                       <Loader2 className="animate-spin" />
-                      Procesando...
+                      Analizando...
                     </>
                   ) : (
                     <>
@@ -182,8 +212,8 @@ const App: React.FC = () => {
       </main>
       
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-50 border border-gray-800">
-        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-        <span className="text-sm font-bold tracking-tight">AI Expert Ready</span>
+        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+        <span className="text-sm font-bold tracking-tight">Gemini 3 Pro Active</span>
       </div>
     </div>
   );
