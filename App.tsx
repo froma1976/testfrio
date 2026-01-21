@@ -11,8 +11,7 @@ const App: React.FC = () => {
     isAnalyzing: false,
     images: [],
     result: null,
-    error: null,
-    hasApiKey: !!process.env.API_KEY
+    error: null
   });
 
   const handleImageAdded = useCallback((base64: string) => {
@@ -109,23 +108,13 @@ const App: React.FC = () => {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-12">
-        {!state.hasApiKey && !state.result && (
-          <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3 text-amber-800 animate-in fade-in slide-in-from-top-4 duration-500">
-            <AlertTriangle size={24} className="flex-shrink-0" />
-            <div className="text-sm">
-              <p className="font-bold">Advertencia de Conexión</p>
-              <p>No se detectó una API_KEY en el entorno. Asegúrate de configurar las variables de entorno en Vercel.</p>
-            </div>
-          </div>
-        )}
-
         {!state.result && (
           <div className="text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
             <h2 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
               Análisis Inteligente de Exámenes
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Pega tus capturas de pantalla (<kbd className="bg-gray-200 px-1.5 py-0.5 rounded text-sm">Ctrl+V</kbd>) y descubre las respuestas correctas basadas en normativa oficial.
+              Pega tus capturas de pantalla (<kbd className="bg-gray-200 px-1.5 py-0.5 rounded text-sm font-mono">Ctrl+V</kbd>) y descubre las respuestas correctas basadas en normativa oficial.
             </p>
           </div>
         )}
@@ -194,7 +183,7 @@ const App: React.FC = () => {
       
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-50 border border-gray-800">
         <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-        <span className="text-sm font-bold tracking-tight">Powered by Gemini 3 Flash</span>
+        <span className="text-sm font-bold tracking-tight">AI Expert Ready</span>
       </div>
     </div>
   );

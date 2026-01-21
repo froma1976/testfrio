@@ -1,4 +1,3 @@
-
 export interface AnalysisResult {
   question: string;
   options: {
@@ -15,5 +14,4 @@ export interface AppState {
   images: string[];
   result: AnalysisResult[] | null;
   error: string | null;
-  hasApiKey: boolean;
 }
