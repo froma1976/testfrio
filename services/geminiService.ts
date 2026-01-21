@@ -4,10 +4,7 @@ import { SYSTEM_PROMPT, MODEL_NAME } from "../constants";
 import { AnalysisResult } from "../types";
 
 export const analyzeTestImages = async (base64Images: string[]): Promise<AnalysisResult[]> => {
-  if (!process.env.API_KEY) {
-    throw new Error("No se ha configurado ninguna API Key en el entorno.");
-  }
-
+  // Inicializamos directamente. El entorno garantiza la disponibilidad de process.env.API_KEY
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const imageParts = base64Images.map(img => ({
@@ -36,7 +33,9 @@ export const analyzeTestImages = async (base64Images: string[]): Promise<Analysi
       throw new Error("El modelo no devolvió ninguna respuesta.");
     }
 
-    return JSON.parse(resultText) as AnalysisResult[];
+    // Limpiamos la respuesta por si el modelo incluye backticks de markdown
+    const cleanJson = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(cleanJson) as AnalysisResult[];
   } catch (error: any) {
     console.error("Gemini API Error:", error);
     throw new Error(error.message || "Error técnico al procesar las imágenes.");
