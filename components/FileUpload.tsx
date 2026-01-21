@@ -1,6 +1,7 @@
 
-import React, { useRef } from 'react';
-import { Upload, Image as ImageIcon, X, Keyboard, Plus } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Upload, Camera, X, Keyboard, Plus } from 'lucide-react';
+import CameraCapture from './CameraCapture';
 
 interface Props {
   onImageAdded: (base64: string) => void;
@@ -11,6 +12,8 @@ interface Props {
 
 const FileUpload: React.FC<Props> = ({ onImageAdded, images, onRemoveImage, disabled }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const [showCamera, setShowCamera] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -21,6 +24,11 @@ const FileUpload: React.FC<Props> = ({ onImageAdded, images, onRemoveImage, disa
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCameraCapture = (base64: string) => {
+    onImageAdded(base64);
+    setShowCamera(false);
   };
 
   return (
@@ -56,42 +64,81 @@ const FileUpload: React.FC<Props> = ({ onImageAdded, images, onRemoveImage, disa
         </div>
       )}
 
-      {/* Main Upload Area (Hidden when many images exist or simplified) */}
+      {/* Main Action Area */}
       {images.length === 0 ? (
-        <label className={`
-          flex flex-col items-center justify-center w-full h-72 border-2 border-dashed rounded-2xl 
-          transition-all cursor-pointer bg-gray-50 
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50 border-blue-200 hover:border-blue-400'}
-        `}>
-          <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-              <Upload className="w-8 h-8 text-blue-600" />
+        <div className="flex flex-col gap-4">
+          <label className={`
+            flex flex-col items-center justify-center w-full h-72 border-2 border-dashed rounded-2xl 
+            transition-all cursor-pointer bg-gray-50 
+            ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-50 border-blue-200 hover:border-blue-400'}
+          `}>
+            <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <Upload className="w-8 h-8 text-blue-600" />
+              </div>
+              <p className="mb-2 text-xl font-bold text-gray-800">Sube la primera captura</p>
+              <p className="text-sm text-gray-500 mb-6 uppercase tracking-wider font-semibold">O PEGA TU IMAGEN</p>
+              <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-xl shadow-sm border border-gray-100">
+                <Keyboard size={20} className="text-blue-500" />
+                <span className="text-gray-700 font-medium text-sm sm:text-base">Pulsa <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-900 border border-gray-300 font-mono text-xs sm:text-sm">Ctrl + V</kbd> para pegar</span>
+              </div>
             </div>
-            <p className="mb-2 text-xl font-bold text-gray-800">Sube la primera captura</p>
-            <p className="text-sm text-gray-500 mb-6 uppercase tracking-wider font-semibold">o</p>
-            <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-xl shadow-sm border border-gray-100">
-              <Keyboard size={20} className="text-blue-500" />
-              <span className="text-gray-700 font-medium">Pulsa <kbd className="px-2 py-1 bg-gray-100 rounded text-gray-900 border border-gray-300 font-mono text-sm">Ctrl + V</kbd> para pegar</span>
-            </div>
-          </div>
-          <input 
-            type="file" 
-            className="hidden" 
-            accept="image/*"
-            onChange={handleFileChange}
+            <input 
+              type="file" 
+              className="hidden" 
+              accept="image/*"
+              onChange={handleFileChange}
+              disabled={disabled}
+              ref={fileInputRef}
+            />
+          </label>
+
+          <button
+            onClick={() => setShowCamera(true)}
             disabled={disabled}
-            ref={fileInputRef}
-          />
-        </label>
+            className={`
+              w-full py-5 px-6 bg-indigo-600 text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-all shadow-lg shadow-indigo-100
+              ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700 hover:scale-[1.01] active:scale-95'}
+            `}
+          >
+            <Camera size={24} />
+            <span className="text-lg">Hacer Foto con la Cámara</span>
+          </button>
+        </div>
       ) : (
-        <div className="text-center py-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-center justify-center gap-4">
-          <div className="flex items-center gap-2 text-blue-700 text-sm font-semibold">
-            <Keyboard size={16} />
-            <span>Sigue pegando (<kbd className="bg-white px-1.5 rounded border border-blue-200">Ctrl+V</kbd>) para añadir más (Máx. 16)</span>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1 text-center py-4 bg-blue-50/50 rounded-2xl border border-blue-100 flex items-center justify-center gap-4">
+            <div className="flex items-center gap-2 text-blue-700 text-sm font-semibold">
+              <Keyboard size={16} />
+              <span>Sigue pegando (<kbd className="bg-white px-1.5 rounded border border-blue-200">Ctrl+V</kbd>)</span>
+            </div>
           </div>
+          <button
+            onClick={() => setShowCamera(true)}
+            disabled={disabled || images.length >= 16}
+            className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-all hover:bg-indigo-700"
+          >
+            <Camera size={20} />
+            <span>Añadir Foto</span>
+          </button>
         </div>
       )}
-      <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} ref={fileInputRef} />
+
+      {showCamera && (
+        <CameraCapture 
+          onCapture={handleCameraCapture} 
+          onClose={() => setShowCamera(false)} 
+        />
+      )}
+
+      {/* Hidden inputs for fallback / direct camera on some mobile browsers if needed */}
+      <input 
+        type="file" 
+        className="hidden" 
+        accept="image/*" 
+        onChange={handleFileChange} 
+        ref={fileInputRef} 
+      />
     </div>
   );
 };

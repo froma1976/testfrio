@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Thermometer, Zap, ShieldCheck, Loader2, AlertTriangle, RefreshCw, PlusCircle } from 'lucide-react';
 import FileUpload from './components/FileUpload';
@@ -64,7 +65,17 @@ const App: React.FC = () => {
       const results = await analyzeTestImages(state.images);
       setState(prev => ({ ...prev, isAnalyzing: false, result: results }));
     } catch (err: any) {
-      setState(prev => ({ ...prev, isAnalyzing: false, error: err.message }));
+      // If the request fails with 'Requested entity was not found.', trigger key selection
+      if (err?.message?.includes("Requested entity was not found")) {
+        // @ts-ignore
+        if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
+           // @ts-ignore
+           await window.aistudio.openSelectKey();
+           setState(prev => ({ ...prev, isAnalyzing: false, error: "Por favor, selecciona una clave de API válida y vuelve a intentarlo." }));
+           return;
+        }
+      }
+      setState(prev => ({ ...prev, isAnalyzing: false, error: err.message || "Error al analizar las imágenes." }));
     }
   };
 
