@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Thermometer, Zap, ShieldCheck, Loader2, AlertTriangle, RefreshCw, PlusCircle } from 'lucide-react';
 import FileUpload from './components/FileUpload';
@@ -13,7 +12,7 @@ const App: React.FC = () => {
     images: [],
     result: null,
     error: null,
-    hasApiKey: true // Forzamos a true ya que la clave está conectada externamente
+    hasApiKey: !!process.env.API_KEY
   });
 
   const handleImageAdded = useCallback((base64: string) => {
@@ -110,13 +109,23 @@ const App: React.FC = () => {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-12">
+        {!state.hasApiKey && !state.result && (
+          <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-3 text-amber-800 animate-in fade-in slide-in-from-top-4 duration-500">
+            <AlertTriangle size={24} className="flex-shrink-0" />
+            <div className="text-sm">
+              <p className="font-bold">Advertencia de Conexión</p>
+              <p>No se detectó una API_KEY en el entorno. Asegúrate de configurar las variables de entorno en Vercel.</p>
+            </div>
+          </div>
+        )}
+
         {!state.result && (
           <div className="text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
             <h2 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
-              Análisis Multi-Captura
+              Análisis Inteligente de Exámenes
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Sube las capturas de tus preguntas (pegando una a una con <strong>Ctrl+V</strong>) y analízalas todas juntas para obtener el resumen.
+              Pega tus capturas de pantalla (<kbd className="bg-gray-200 px-1.5 py-0.5 rounded text-sm">Ctrl+V</kbd>) y descubre las respuestas correctas basadas en normativa oficial.
             </p>
           </div>
         )}
@@ -136,7 +145,7 @@ const App: React.FC = () => {
                 
                 {state.error && (
                   <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-700">
-                    <AlertTriangle size={20} />
+                    <AlertTriangle size={20} className="flex-shrink-0" />
                     <p className="font-medium">{state.error}</p>
                   </div>
                 )}
@@ -154,12 +163,12 @@ const App: React.FC = () => {
                   {state.isAnalyzing ? (
                     <>
                       <Loader2 className="animate-spin" />
-                      Procesando {state.images.length} capturas...
+                      Procesando...
                     </>
                   ) : (
                     <>
                       <Zap className={state.images.length > 0 ? 'animate-pulse' : ''} />
-                      Identificar Todas las Respuestas
+                      Resolver Preguntas
                     </>
                   )}
                 </button>
@@ -172,7 +181,7 @@ const App: React.FC = () => {
                     className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-bold bg-blue-50 px-6 py-3 rounded-full transition-colors border border-blue-100"
                   >
                     <PlusCircle size={20} />
-                    Nuevo Examen
+                    Analizar otro examen
                   </button>
                 </div>
                 
@@ -184,8 +193,8 @@ const App: React.FC = () => {
       </main>
       
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-50 border border-gray-800">
-        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        <span className="text-sm font-bold tracking-tight">Potenciado por Gemini 3 Pro</span>
+        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+        <span className="text-sm font-bold tracking-tight">Powered by Gemini 3 Flash</span>
       </div>
     </div>
   );

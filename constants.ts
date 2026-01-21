@@ -1,5 +1,4 @@
-
-export const MODEL_NAME = 'gemini-3-pro-preview';
+export const MODEL_NAME = 'gemini-3-flash-preview';
 
 export const SYSTEM_PROMPT = `
 Eres un experto de primer nivel en sistemas de refrigeración, climatización de vehículos y normativa ambiental de gases fluorados.
