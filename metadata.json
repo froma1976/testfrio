@@ -1,0 +1,5 @@
+{
+  "name": "RefriTest AI Expert",
+  "description": "An intelligent assistant that analyzes screenshots of refrigeration and F-Gas exams to provide correct answers based on current EU/Spanish regulations and technical manuals.",
+  "requestFramePermissions": []
+}
