@@ -5,7 +5,7 @@ import { AnalysisResult } from "../types";
 
 export const analyzeTestImages = async (base64Images: string[]): Promise<AnalysisResult[]> => {
   if (!process.env.API_KEY) {
-    throw new Error("API Key not found");
+    throw new Error("No se ha configurado ninguna API Key en el entorno.");
   }
 
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -18,7 +18,7 @@ export const analyzeTestImages = async (base64Images: string[]): Promise<Analysi
   }));
 
   const textPart = {
-    text: `Analiza estas ${base64Images.length} capturas de pantalla de un examen. Extrae TODAS las preguntas presentes en el orden en que aparecen en las imágenes. Devuelve el resultado en el formato JSON especificado.`
+    text: `Analiza estas ${base64Images.length} capturas de pantalla de un examen de gases fluorados. Extrae TODAS las preguntas presentes. Devuelve el resultado exclusivamente en formato JSON.`
   };
 
   try {
@@ -33,15 +33,12 @@ export const analyzeTestImages = async (base64Images: string[]): Promise<Analysi
 
     const resultText = response.text;
     if (!resultText) {
-      throw new Error("Empty response from AI");
+      throw new Error("El modelo no devolvió ninguna respuesta.");
     }
 
     return JSON.parse(resultText) as AnalysisResult[];
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-    if (error.message?.includes("Requested entity was not found")) {
-      throw new Error("API_KEY_INVALID");
-    }
-    throw new Error(error.message || "Error al analizar las imágenes");
+    throw new Error(error.message || "Error técnico al procesar las imágenes.");
   }
 };

@@ -1,10 +1,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Thermometer, Zap, ShieldCheck, Loader2, AlertTriangle, RefreshCw, PlusCircle, LayoutDashboard } from 'lucide-react';
+import { Thermometer, Zap, ShieldCheck, Loader2, AlertTriangle, RefreshCw, PlusCircle } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import QuestionResults from './components/QuestionResults';
 import AnalysisSummary from './components/AnalysisSummary';
-import ApiKeySelector from './components/ApiKeySelector';
 import { analyzeTestImages } from './services/geminiService';
 import { AppState } from './types';
 
@@ -14,17 +13,8 @@ const App: React.FC = () => {
     images: [],
     result: null,
     error: null,
-    hasApiKey: false
+    hasApiKey: true // Forzamos a true ya que la clave está conectada externamente
   });
-
-  useEffect(() => {
-    const checkKey = async () => {
-      // @ts-ignore
-      const hasKey = await window.aistudio.hasSelectedApiKey();
-      setState(prev => ({ ...prev, hasApiKey: hasKey }));
-    };
-    checkKey();
-  }, []);
 
   const handleImageAdded = useCallback((base64: string) => {
     setState(prev => {
@@ -76,11 +66,7 @@ const App: React.FC = () => {
       const results = await analyzeTestImages(state.images);
       setState(prev => ({ ...prev, isAnalyzing: false, result: results }));
     } catch (err: any) {
-      if (err.message === 'API_KEY_INVALID') {
-        setState(prev => ({ ...prev, isAnalyzing: false, hasApiKey: false }));
-      } else {
-        setState(prev => ({ ...prev, isAnalyzing: false, error: err.message }));
-      }
+      setState(prev => ({ ...prev, isAnalyzing: false, error: err.message }));
     }
   };
 
@@ -88,14 +74,6 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, images: [], result: null, error: null }));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  if (!state.hasApiKey) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <ApiKeySelector onKeySelected={() => setState(prev => ({ ...prev, hasApiKey: true }))} />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-gray-900 font-sans pb-20">
@@ -116,7 +94,7 @@ const App: React.FC = () => {
           <div className="hidden sm:flex items-center gap-6">
             <div className="flex items-center gap-1.5 text-sm font-medium text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
               <ShieldCheck size={16} />
-              <span>Regulaciones 2024</span>
+              <span>Regulaciones 2024 Actualizadas</span>
             </div>
             {state.images.length > 0 && (
               <button 
@@ -138,7 +116,7 @@ const App: React.FC = () => {
               Análisis Multi-Captura
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Sube las capturas de tus 16 preguntas (pegando una a una con <strong>Ctrl+V</strong>) y analízalas todas juntas.
+              Sube las capturas de tus preguntas (pegando una a una con <strong>Ctrl+V</strong>) y analízalas todas juntas para obtener el resumen.
             </p>
           </div>
         )}
@@ -181,7 +159,7 @@ const App: React.FC = () => {
                   ) : (
                     <>
                       <Zap className={state.images.length > 0 ? 'animate-pulse' : ''} />
-                      Enviar {state.images.length} capturas a la vez
+                      Identificar Todas las Respuestas
                     </>
                   )}
                 </button>
@@ -194,7 +172,7 @@ const App: React.FC = () => {
                     className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-bold bg-blue-50 px-6 py-3 rounded-full transition-colors border border-blue-100"
                   >
                     <PlusCircle size={20} />
-                    Comenzar nuevo análisis
+                    Nuevo Examen
                   </button>
                 </div>
                 
@@ -207,7 +185,7 @@ const App: React.FC = () => {
       
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 z-50 border border-gray-800">
         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-        <span className="text-sm font-bold tracking-tight">Análisis Masivo con Gemini 3 Pro</span>
+        <span className="text-sm font-bold tracking-tight">Potenciado por Gemini 3 Pro</span>
       </div>
     </div>
   );
